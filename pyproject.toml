@@ -1,0 +1,36 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "genesis_lab"
+version = "0.0.1"
+description = "A Isaaclab liked genesis_lab"
+authors = [{name = "LI MINGRUI", email = "atticlmr@gmail.com"}]
+readme = "README.md"
+license = {text = "Apache-2.0"}
+license-files = [{path = "LICENSE"}]
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: Apache Software License",
+    "Operating System :: OS Independent",
+]
+requires-python = ">=3.11"
+dependencies = [
+    "genesis-world",
+    "gymnasium",
+]
+
+[project.optional-dependencies]
+dev = ["pytest", "black", "flake8"]
+
+[project.scripts]
+
+# genesis-lab = "genesis_lab.cli:main"
+my-cli = "my_package.main:main"  
+
+[tool.setuptools.packages.find]
+where = ["source"]
+
+[tool.setuptools.package-dir]
+"" = "source"
