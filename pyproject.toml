@@ -3,34 +3,64 @@ requires = ["setuptools>=61.0", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "genesis_lab"
+name = "genesislab"
 version = "0.0.1"
-description = "A Isaaclab liked genesis_lab"
+description = "An Isaac-Lab-like robotics simulation framework built on Genesis"
 authors = [{name = "LI MINGRUI", email = "atticlmr@gmail.com"}]
 readme = "README.md"
-license = {text = "Apache-2.0"}
-license-files = [{path = "LICENSE"}]
-classifiers = [
-    "Programming Language :: Python :: 3",
-    "License :: OSI Approved :: Apache Software License",
-    "Operating System :: OS Independent",
-]
+
 requires-python = ">=3.11"
+
+license = {text = "Apache-2.0"}
+
+keywords = ["robotics", "simulation", "genesis-world", "isaaclab"]
+
+
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Science/Research",
+    "License :: OSI Approved :: Apache Software License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Operating System :: OS Independent",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+]
+
+
+
 dependencies = [
     "genesis-world",
     "gymnasium",
+    "numpy>=1.24",
+    "torch>=2.1",
+    "swanlab",
+    "tensorboard",
+    "h5py",
 ]
 
 [project.optional-dependencies]
-dev = ["pytest", "black", "flake8"]
+dev = [
+    "pytest>=7",
+    "black>=23",
+    "ruff>=0.1",        
+    "mypy>=1.6",        
+    "pre-commit",      
+]
 
 [project.scripts]
+genesis-lab = "genesislab.cli:main"
 
-# genesis-lab = "genesis_lab.cli:main"
-my-cli = "my_package.main:main"  
+[project.urls]
+Homepage = "https://github.com/Atticlmr/genesislab"
+Documentation = "https://atticlmr.github.io/genesis-lab-docs/"
+Repository = "https://github.com/Atticlmr/genesislab.git"
+"Bug Tracker" = "https://github.com/Atticlmr/genesislab/issues"
+
+
+[tool.setuptools]
+package-dir = {"" = "source"} 
 
 [tool.setuptools.packages.find]
-where = ["source"]
-
-[tool.setuptools.package-dir]
-"" = "source"
+where = ["source"]                     
+include = ["genesislab*"]  
