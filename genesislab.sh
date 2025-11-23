@@ -3,7 +3,9 @@
 set -e  # 出错立即退出
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-SETUP_SCRIPT="$SCRIPT_DIR/setup/setup_genesis.py"
+SETUP_GENESIS_SCRIPT="$SCRIPT_DIR/setup/setup_genesis.py"
+
+SETUP_GENESISLAB_SCRIPT="$SCRIPT_DIR/setup/setup_genesislab.py"
 
 # 检查必要工具
 for cmd in git python3; do
@@ -15,12 +17,11 @@ for cmd in git python3; do
 done
 
 # 确保脚本可执行
-chmod +x "$SETUP_SCRIPT"
+chmod +x "$SETUP_GENESIS_SCRIPT"
+chmod +x "$SETUP_GENESISLAB_SCRIPT"
 
-echo "🚀 Starting Genesis installation on Ubuntu..."
-python3 "$SETUP_SCRIPT"
+echo "🚀 Starting Genesis installation genesis on Ubuntu..."
+python3 "$SETUP_GENESIS_SCRIPT"
 
 echo
 echo "✅ Installation complete!"
-echo "To use Genesis, run:"
-echo "   source $SCRIPT_DIR/genesis/bin/activate"

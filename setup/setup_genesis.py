@@ -1,83 +1,94 @@
 #!/usr/bin/env python3
 import os
-import sys
 import subprocess
 import shutil
+import sys
+import json
+import urllib.request
 from pathlib import Path
 
-BASE_DIR = Path(__file__).parent.parent.resolve()
+BASE_DIR      = Path(__file__).parent.parent.resolve()
 DOWNLOADS_DIR = BASE_DIR / "downloads"
-GENESIS_REPO_URL = "https://github.com/Genesis-Embodied-AI/Genesis.git"
-GENESIS_SRC_DIR = DOWNLOADS_DIR / "Genesis"
-VENV_NAME = "env_genesis"
-PYTHON_VERSION = "3.11"
+VENV_PATH     = BASE_DIR / "env_genesis"
+PYTHON_VER    = "3.11"
 
-def run_cmd(cmd, cwd=None, env=None):
-    print(f"▶️ Running: {' '.join(cmd)}")
-    result = subprocess.run(cmd, cwd=cwd, env=env)
-    if result.returncode != 0:
-        print("❌ Command failed.")
+# GitHub 仓库
+REPO_SLUG     = "Atticlmr/Genesis"
+
+# ---------- 工具 ----------
+def run(cmd: list[str], cwd=None) -> None:
+    print(f"▶️  {' '.join(cmd)}")
+    if (code := subprocess.run(cmd, cwd=cwd).returncode) != 0:
+        print("❌  Command failed.")
+        sys.exit(code)
+
+def ensure_uv() -> None:
+    if shutil.which("uv"):
+        return
+    print("⚠️  uv not found, installing via official script…")
+    install_script = "https://astral.sh/uv/install.sh"
+    run(["curl", "-LsSf", install_script, "-o", "/tmp/uv_install.sh"])
+    run(["sh", "/tmp/uv_install.sh"])
+    cargo_bin = Path.home() / ".cargo" / "bin"
+    os.environ["PATH"] = f"{cargo_bin}{os.pathsep}{os.environ['PATH']}"
+    if not shutil.which("uv"):
+        print("❌  still cannot find uv.")
         sys.exit(1)
 
-def is_tool_installed(name):
-    return shutil.which(name) is not None
+def github_api(url: str) -> dict:
+    """GET GitHub API JSON，无 token 限速 60/h"""
+    req = urllib.request.Request(url)
+    req.add_header("Accept", "application/vnd.github+json")
+    with urllib.request.urlopen(req) as resp:
+        return json.loads(resp.read())
 
-def clone_genesis():
+def download_file(url: str, dst: Path):
+    """流式下载，显示简单进度"""
+    print(f"⬇️  Downloading {url}")
+    urllib.request.urlretrieve(url, dst)
+    print(f"✅  Saved to {dst}")
+
+# ---------- 主流程 ----------
+def main() -> None:
     DOWNLOADS_DIR.mkdir(exist_ok=True)
-    if GENESIS_SRC_DIR.exists():
-        print(f"📁 Genesis already cloned at {GENESIS_SRC_DIR}. Skipping.")
+
+    # 1. 获取最新 release
+    latest = github_api(f"https://api.github.com/repos/{REPO_SLUG}/releases/latest")
+    tag    = latest["tag_name"]
+    print(f"📦  Latest release: {tag}")
+
+    # 2. 找到第一个 .whl 资源
+    wheels = [a for a in latest["assets"] if a["name"].endswith(".whl")]
+    if not wheels:
+        print("❌  No wheel file found in release!")
+        sys.exit(1)
+    wheel_url = wheels[0]["browser_download_url"]
+    wheel_file = DOWNLOADS_DIR / wheels[0]["name"]
+
+    # 3. 下载（如已存在则跳过）
+    if wheel_file.exists():
+        print(f"📁  Wheel already exists: {wheel_file}")
     else:
-        print("⬇️ Cloning Genesis repository (with submodules)...")
-        run_cmd(["git", "clone", GENESIS_REPO_URL, str(GENESIS_SRC_DIR)])
+        download_file(wheel_url, wheel_file)
 
-def main():
-    clone_genesis()
+    # 4. 确保 uv 存在
+    ensure_uv()
 
-    # 优先使用 uv，其次 conda
-    if is_tool_installed("uv"):
-        use_uv = True
-        use_conda = False
-    elif is_tool_installed("conda"):
-        use_uv = False
-        use_conda = True
-    else:
-        print("⚠️ Neither 'uv' nor 'conda' found. Installing uv automatically...")
-        # 安装 uv via curl (官方推荐方式)
-        run_cmd(["curl", "-LsSf", "https://astral.sh/uv/install.sh", "|", "sh"], shell=True)
-        # 重新加载 PATH（简单处理：直接调用绝对路径或假设已生效）
-        if not is_tool_installed("uv"):
-            # 尝试从常见位置加载
-            uv_path = Path.home() / ".cargo" / "bin" / "uv"
-            if uv_path.exists():
-                os.environ["PATH"] = f"{uv_path.parent}:{os.environ['PATH']}"
-            else:
-                print("❌ Failed to install or locate 'uv'.")
-                sys.exit(1)
-        use_uv = True
-        use_conda = False
+    # 5. 创建虚拟环境
+    run(["uv", "venv", str(VENV_PATH), "--python", PYTHON_VER])
 
-    venv_path = BASE_DIR / VENV_NAME
+    # 6. 安装 wheel
+    os.environ["VIRTUAL_ENV"] = str(VENV_PATH)
+    run([
+        "uv", "pip", "install",
+        "--cache-dir", str(DOWNLOADS_DIR / "pip-cache"),
+        str(wheel_file)
+    ])
 
-    if use_uv:
-        print("✅ Using uv to manage environment.")
-        run_cmd(["uv", "venv", str(venv_path), "--python", PYTHON_VERSION])
-        run_cmd([
-            "uv", "pip", "install",
-            "--cache-dir", str(DOWNLOADS_DIR / "pip-cache"),
-            "-e", str(GENESIS_SRC_DIR)
-        ], env={**os.environ, "VIRTUAL_ENV": str(venv_path)})
-
-    elif use_conda:
-        print("✅ Using conda to manage environment.")
-        if not (venv_path / "conda-meta").exists():
-            run_cmd(["conda", "create", "-y", "-p", str(venv_path), f"python={PYTHON_VERSION}"])
-        python_bin = venv_path / "bin" / "python"
-        run_cmd([str(python_bin), "-m", "pip", "install", "--cache-dir", str(DOWNLOADS_DIR / "pip-cache"), "-e", str(GENESIS_SRC_DIR)])
-
-    print(f"\n🎉 Genesis installed in editable mode!")
-    print(f"📦 Source: {GENESIS_SRC_DIR}")
-    print(f"🐍 Virtual environment: {venv_path}")
-    print(f"💡 Activate with: source {venv_path}/bin/activate")
+    print("\n🎉  Genesis wheel installed!")
+    print(f"📦  Wheel  : {wheel_file}")
+    print(f"🐍  Venv   : {VENV_PATH}")
+    print(f"💡  Activate: source {VENV_PATH}/bin/activate")
 
 if __name__ == "__main__":
     main()
