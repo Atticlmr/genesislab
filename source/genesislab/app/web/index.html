@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+  <meta charset="utf-8"/>
+  <title>Genesis 三段式布局</title>
+  <style>
+    html,body{height:100%;margin:0;font-family:Arial,Helvetica,sans-serif;background:#111;color:#eee;}
+    #wrap{display:flex;height:100%;}
+    .panel{flex:1;display:flex;flex-direction:column;padding:10px;border:1px solid #444;}
+    #left{flex: 0 0 280px;}   /* 左侧固定 280 px */
+    #right{flex: 0 0 280px;}  /* 右侧固定 280 px */
+    #center{flex:1 1 auto;}   /* 中间自适应 */
+
+    h3{margin:5px 0 10px;font-size:16px;}
+    /* 中间视频区 */
+    #videoBox{flex:1;background:#000;border:1px solid #555;display:flex;align-items:center;justify-content:center;}
+    #videoBox img{max-width:100%;max-height:100%;object-fit:contain;}
+  </style>
+</head>
+<body>
+  <div id="wrap">
+    <!-- 左侧面板 -->
+    <div id="left" class="panel">
+      <h3>左侧工具箱</h3>
+      <p style="font-size:14px;color:#999;">这里以后放按钮、滑条、代码片段……</p>
+    </div>
+
+    <!-- 中间面板：推流视频 -->
+    <div id="center" class="panel">
+      <h3>仿真画面</h3>
+      <div id="videoBox">
+        <!-- 现在只占位，下一篇把 src="/stream" 激活 -->
+        <img src="/stream" alt="Waiting for stream…"/>
+      </div>
+    </div>
+
+    <!-- 右侧面板 -->
+    <div id="right" class="panel">
+      <h3>右侧信息</h3>
+      <p style="font-size:14px;color:#999;">这里以后放对象详情、日志、图表……</p>
+    </div>
+  </div>
+</body>
+</html>
