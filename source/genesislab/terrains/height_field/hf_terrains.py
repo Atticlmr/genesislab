@@ -35,17 +35,21 @@ def hf_pyramid_sloped_terrain(cfg: hf_terrians_cfg.HfPyramidSlopedTerrainCfg) ->
     y, x = np.ogrid[:h_pix, :w_pix]
     dist = np.maximum(np.abs(x - cx), np.abs(y - cy))
     
-    if cfg.inverted:
-        hf = dist * 0.1 * np.tan(slope)
-        max_dist = max(cx, cy)
-        max_height = max_dist * 0.1 * np.tan(slope)
-        hf = hf - max_height
-        mask = dist <= platform_pix / 2
-        hf[mask] = -max_height
+    max_dist = max(cx, cy)
+    
+    platform_radius = platform_pix / 2
+    
+    if not cfg.inverted:
+        platform_edge_height = max(0, max_dist - platform_radius) * 0.1 * np.tan(slope)
+        hf = max_dist * 0.1 * np.tan(slope) - dist * 0.1 * np.tan(slope)
+        mask = dist <= platform_radius
+        hf[mask] = platform_edge_height
     else:
-        max_dist = max(cx, cy)
-        max_height = max_dist * 0.1 * np.tan(slope)
-        hf = max_height - dist * 0.1 * np.tan(slope)
+        min_height = -max_dist * 0.1 * np.tan(slope)
+        platform_edge_height = min_height + platform_radius * 0.1 * np.tan(slope)
+        hf = min_height + dist * 0.1 * np.tan(slope)
+        mask = dist <= platform_radius
+        hf[mask] = platform_edge_height
     
     return hf
 
