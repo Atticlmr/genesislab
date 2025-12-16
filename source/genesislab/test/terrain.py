@@ -139,11 +139,25 @@ def main():
             # 创建配置对象
             cfg_obj = CfgClass(**params)
             
+            # 调试日志：检查配置对象的属性
+            print(f"\n=== 生成地形: {CfgClass.__name__} ===")
+            print(f"函数名: {func_name}")
+            if hasattr(cfg_obj, 'inverted'):
+                print(f"inverted属性: {cfg_obj.inverted}")
+            else:
+                print("inverted属性: 无")
+            
             # 获取对应的生成函数
             gen_func = getattr(hf_terrains, func_name)
             
             # 生成地形
             meshes, origin = gen_func(cfg_obj)
+            
+            # 调试日志：检查生成的高度场范围
+            if hasattr(cfg_obj, 'inverted'):
+                height_min = meshes[0].vertices[:, 2].min()
+                height_max = meshes[0].vertices[:, 2].max()
+                print(f"高度范围: [{height_min:.3f}, {height_max:.3f}]")
             
             # 导出STL文件
             out_file = OUT_DIR / f"{CfgClass.__name__}.stl"

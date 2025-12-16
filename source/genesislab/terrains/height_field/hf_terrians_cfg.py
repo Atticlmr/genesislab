@@ -5,8 +5,10 @@
  #  This file is derived from Isaac Lab.(https://github.com/isaac-sim/IsaacLab/blob/main/CONTRIBUTORS.md).
 
 from dataclasses import dataclass,MISSING
-@dataclass
+@dataclass(kw_only=True)
 class HfTerrainBaseCfg:
+
+    seed: int|None = None
     """ Base configuration for height field terrain"""
     size: tuple[float, float]
 

@@ -15,12 +15,38 @@ import numpy as np
 import trimesh
 from typing import Callable, List, Tuple, Any
 
-def hf_to_mesh(dx: float = 1.0, dy: float = 1.0):
-    """装饰器：2-D 高度图 → ([mesh], 全局最高点 origin)"""
+def hf_to_mesh(dx: float = 1.0, dy: float = 1.0, seed: int|None = None):
+    """装饰器：2-D 高度图 → ([mesh], 全局最高点 origin)
+    
+    Args:
+        dx: x方向网格间距
+        dy: y方向网格间距
+        seed: 随机数种子，如果为None则使用配置文件中的seed
+    """
     def decorator(func: Callable[[Any], np.ndarray]):
         @functools.wraps(func)
         def wrapper(*args, **kwargs):
-            hf = func(*args, **kwargs).astype(float)
+            # 从配置对象中获取seed（如果存在）
+            cfg = kwargs.get('cfg', None)
+            if cfg is not None and hasattr(cfg, 'seed') and seed is None:
+                actual_seed = cfg.seed
+            else:
+                actual_seed = seed
+            
+            # 保存当前全局随机状态，避免污染其他随机数生成
+            original_state = np.random.get_state()
+            
+            # 设置随机数种子
+            if actual_seed is not None:
+                np.random.seed(actual_seed)
+            
+            try:
+                # 执行函数
+                hf = func(*args, **kwargs).astype(float)
+            finally:
+                # 恢复原始随机状态，确保不影响其他代码
+                np.random.set_state(original_state)
+            
             rows, cols = hf.shape
 
             # 1. 顶点
